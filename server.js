@@ -2,39 +2,42 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const multer = require('multer');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors({  
-  origin: 'https://meme-frontend.onrender.com',  
+app.use(cors({
+  origin: 'https://meme-frontend.onrender.com',
   methods: ['GET', 'POST'],
 }));
-app.use(express.json({ limit: '10mb' })); // Increase JSON limit to handle images
+
+app.use(express.json({ limit: '10mb' })); 
 
 const uploadsDir = './uploads';
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
 }
 
+// Multer Storage Setup
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadsDir),
+  filename: (req, file, cb) => cb(null, `${Date.now()}${path.extname(file.originalname)}`)
+});
+const upload = multer({ storage });
+
 // Store IP logs
 let ipLogs = [];
 
-// Route to handle image upload (Base64)
-app.post('/upload', (req, res) => {
-  if (!req.body.photo) {
-    return res.status(400).json({ message: 'No photo provided' });
+// Route to handle image uploads (File)
+app.post('/upload', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded' });
   }
 
-  const base64Data = req.body.photo.replace(/^data:image\/png;base64,/, "");
-  const filename = `${Date.now()}.png`;
-  const filePath = path.join(uploadsDir, filename);
-
-  fs.writeFile(filePath, base64Data, 'base64', (err) => {
-    if (err) {
-      return res.status(500).json({ message: 'Failed to save image' });
-    }
-    res.json({ message: 'File uploaded successfully', url: `/uploads/${filename}` });
+  res.json({
+    message: 'File uploaded successfully',
+    url: `https://meme-backend-d9mt.onrender.com/uploads/${req.file.filename}`
   });
 });
 
@@ -46,7 +49,7 @@ app.get('/photos', (req, res) => {
     }
 
     const photos = files.map(file => ({
-      url: `/uploads/${file}`,
+      url: `https://meme-backend-d9mt.onrender.com/uploads/${file}`,
       timestamp: new Date(parseInt(file.split('.')[0])).toLocaleString()
     }));
 
