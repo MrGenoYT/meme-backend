@@ -14,7 +14,7 @@ app.use(cors({
 
 app.use(express.json({ limit: '10mb' })); 
 
-const uploadsDir = './uploads';
+const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
 }
@@ -29,7 +29,7 @@ const upload = multer({ storage });
 // Store IP logs
 let ipLogs = [];
 
-// Route to handle image uploads (File)
+// Route to handle image uploads
 app.post('/upload', upload.single('file'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No file uploaded' });
@@ -37,7 +37,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
 
   res.json({
     message: 'File uploaded successfully',
-    url: `https://meme-backend-d9mt.onrender.com/uploads/${req.file.filename}`
+    url: `https://meme-backend-d2kh.onrender.com/uploads/${req.file.filename}`
   });
 });
 
@@ -49,7 +49,7 @@ app.get('/photos', (req, res) => {
     }
 
     const photos = files.map(file => ({
-      url: `https://meme-backend-d9mt.onrender.com/uploads/${file}`,
+      url: `https://meme-backend-d2kh.onrender.com/uploads/${file}`,
       timestamp: new Date(parseInt(file.split('.')[0])).toLocaleString()
     }));
 
@@ -73,8 +73,8 @@ app.get('/ips', (req, res) => {
   res.json(ipLogs);
 });
 
-// Serve static files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve static files (images)
+app.use('/uploads', express.static(uploadsDir));
 
 // Start the server
 app.listen(port, () => {
